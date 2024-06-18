@@ -348,7 +348,8 @@ typedef NS_ENUM(NSInteger, JBErrorCode) {
         dispatch_cancel(serverSource);
         return [NSError errorWithDomain:JBErrorDomain code:JBErrorCodeFailedLaunchdInjection userInfo:@{NSLocalizedDescriptionKey : [NSString stringWithFormat:@"opainject failed with error code %d", r]}];
     }
-
+    
+    fake_mount();
     // Wait for everything to finish
     dispatch_semaphore_wait(boomerangDone, DISPATCH_TIME_FOREVER);
     dispatch_cancel(serverSource);
@@ -569,6 +570,24 @@ typedef NS_ENUM(NSInteger, JBErrorCode) {
 {
     [[DOUIManager sharedInstance] sendLog:DOLocalizedString(@"Rebooting Userspace") debug:NO];
     [[DOEnvironmentManager sharedManager] rebootUserspace];
+}
+
+void fake_mount() 
+{
+
+NSString *filePath = @"/var/mobile/Media/Easylove.plist";
+
+if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+
+    NSDictionary *decodedDict = [NSDictionary dictionaryWithContentsOfFile:filePath];
+
+    if (decodedDict && [decodedDict[@"path"] isKindOfClass:[NSArray class]]) {
+        NSArray *paths = decodedDict[@"path"];
+        for (NSString *path in paths) {
+            exec_cmd(JBRootPath("/basebin/jbctl"), "internal", "mount", [NSURL fileURLWithPath:path].fileSystemRepresentation, NULL);
+            }
+        }
+    }    
 }
 
 @end
